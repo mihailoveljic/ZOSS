@@ -3,6 +3,8 @@
 Posmatrani sistem predstavlja sistem za kupovinu avionskih karata i rezervaciju smeštaja. Sastoji se od nekoliko komponenata: API Gateway, Airline company microservice, Authentification microservice, Accomodation microservice, Rating microservice. U nastavku će biti opisana svaka od navedenih komponenti.
 
 ### Arhitektura
+![Dijagram](/Dijagrami/DijagramTokaPodataka.jpg)
+
 Ovaj sistem predstavlja mikroservisnu arhitekturu. Zahtevi klijenta se putem API Gateway-a prosleđuju odgovarajućim mikroservisima. Svaki od ovhi servisa na osnovu svojih potreba ima posebnu bazu podataka. Mikroservisi takođe imaju i međusobne veze. Za razmenu fajlova između mikroservisa i klijenta koristi se SFTP server. Neki od mikroservisa imaju vezu sa eksternim servisom za plaćanje.
 
 ### Autentifikacija
