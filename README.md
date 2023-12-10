@@ -1,6 +1,6 @@
 # Bezbednosna analiza enterprise sistema
 
-Ovaj repozitorijum sadrži rezultate istraživanja bezbednosnih aspekata tehnologija korišćenih u modernim enterprise sistemima. Cilj istraživanje je izrade detaljnog modela pretnji softverskog sistema osmišljenog za potrebe ovog istraživanja. Nastao je tokom izrade projektnog zadatka iz predmeta Zaštita i oporavak softverskih sistema. 
+Ovaj repozitorijum sadrži rezultate istraživanja bezbednosnih aspekata tehnologija korišćenih u modernim enterprise sistemima. Cilj istraživanja je izrada detaljnog modela pretnji softverskog sistema osmišljenog za potrebe ovog istraživanja. Nastao je tokom izrade projektnog zadatka iz predmeta Zaštita i oporavak softverskih sistema. 
 
 ## Sadržaj
 - [EnterpriseSoftver/Opis](/EnterpriseSoftver/Opis.md) : Dokument u kojem je opisan softverski sistem osmišljen za potrebe ovog istraživanja. 

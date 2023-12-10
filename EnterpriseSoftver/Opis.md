@@ -8,10 +8,10 @@ Posmatrani sistem predstavlja sistem za kupovinu avionskih karata i rezervaciju 
 Ovaj sistem predstavlja mikroservisnu arhitekturu. Zahtevi klijenta se putem API Gateway-a prosleđuju odgovarajućim mikroservisima. Svaki od ovhi servisa na osnovu svojih potreba ima posebnu bazu podataka. Mikroservisi takođe imaju i međusobne veze. Za razmenu fajlova između mikroservisa i klijenta koristi se SFTP server. Neki od mikroservisa imaju vezu sa eksternim servisom za plaćanje.
 
 ### Autentifikacija
-Nakon zahteva korisnika da se prijavi na sistem API Gateway šalje zahtev servisu za autentifikaciju, dobija JWT token, i šalje ga nazad korisniku. Pri svakom narednom zahtevu korisnika, API Gateway šalje zahtev servisu za autentifikaciju kako bi token verifikovao, potom prosleđuje zahtev zajedno sa tokenom odgovarajućim servisima. Međuservisna komunikacija obezbeđena je korišćenjem mutual TLS-a. Prednosti korišćenja posebnog servisa za autentifikaciju naspram implementacije kompletne logike u API Gateway-u jeste da API Gateway više nije single point of failure. Mana je da je povećan latency u sistemu, jer sada API Gateway šalje dodatne pozive ka servisu za autentifikaciju.
+Nakon zahteva korisnika da se prijavi na sistem API Gateway šalje zahtev servisu za autentifikaciju, dobija JWT token [1], i šalje ga nazad korisniku. Pri svakom narednom zahtevu korisnika, API Gateway šalje zahtev servisu za autentifikaciju kako bi token verifikovao, potom prosleđuje zahtev zajedno sa tokenom odgovarajućim servisima. Međuservisna komunikacija obezbeđena je korišćenjem mutual TLS-a. Prednosti korišćenja posebnog servisa za autentifikaciju naspram implementacije kompletne logike u API Gateway-u jeste da API Gateway više nije single point of failure [2]. Mana je da je povećan latency u sistemu, jer sada API Gateway šalje dodatne pozive ka servisu za autentifikaciju.
 
 ### Autorizacija
-Svaki servis ima svoju logiku za autorizaciju. Prednost ovakve implementacije jeste da servisi imaju veću kontrolu pri implementaciji kontrole pristupa. Mane su da servisi više ne obavljaju jednu stvar, već pored poslovne logike brinu i o autorizaciji. Pored toga, dolazi i do ponavljanja koda, odnosno ne poštuje se DRY princip.
+Svaki servis ima svoju logiku za autorizaciju. Poseduje Authorization middleware [3], kao i bazu podataka koja u sebi čuva politike pristupa. Middleware presreće zahteve i proverava da li korisnik ima prava pristupa traženom resursu, tako što šalje upite ka bazi. Potrebne podatke o korisniku dobija iz JWT tokena koji API Gateway prosleđuje zajedno sa zahtevom. Politike pristupa implementirane su uz pomoć RBAC-a (Role-based access control). Prednost ovakve implementacije jeste da servisi imaju veću kontrolu pri implementaciji kontrole pristupa [4]. Mane su da servisi više ne obavljaju jednu stvar, već pored poslovne logike brinu i o autorizaciji. Pored toga, dolazi i do ponavljanja koda, odnosno ne poštuje se DRY princip [5].
 
 ## Klijentska aplikacija
 
@@ -81,6 +81,7 @@ Accomodation i Airline mikroservisi za poslovne korisnike mogu izdavati fakture.
 
 # Reference
 1) https://frontegg.com/blog/authentication-in-microservices
-2) https://www.thirdrocktechkno.com/blog/authentication-authorization-in-a-microservices-architecture/
-3) https://dev.to/behalf/authentication-authorization-in-microservices-architecture-part-i-2cn0
-4) https://api7.ai/blog/understanding-microservices-authentication-services
+2) https://api7.ai/blog/understanding-microservices-authentication-services
+3) https://www.alexanderlolis.com/authorization-in-a-microservices-world
+4) https://www.thirdrocktechkno.com/blog/authentication-authorization-in-a-microservices-architecture/
+5) https://dev.to/behalf/authentication-authorization-in-microservices-architecture-part-i-2cn0
