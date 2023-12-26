@@ -1,26 +1,17 @@
 # Analiza ranjivosti, napada i mitigacija za NodeJs i Mongo tehnologije
 
-## Uvod
 U narednim poglavljima biće prikazan deo sistema koji će biti analiziran, data stabla napada za odgovarajuće napade, kao i biti priložen propratni tekst za ta stabla.
 
-## Deo sistema koji se analizira
+U nastavku je naveden dijagram koji ističe deo sistema koji se analizira, koji uključuje serversku aplikaciju izgrađenu u NodeJS tehnologiji i MongoDB bazu podataka.
 ![Dijagram](/Dijagrami/NodeMongo.jpg)
 
 ## NodeJs
 NodeJs je jedna od najpopularnijih tehnologija koje se danas koriste za implementaciju backend sistema. Ono što ovu tehnologiju čini zanimljivom za analizu jeste njena modularnost, odnosno korišćenje Node Package Manager-a (NPM) za ubacivanje zavisnosti i paketa koji su drugi developeri implementirali. Dovoljno je da se u nekom od "čvorova" u lancu zavisnosti pronađe neka ranjivost, da bi se ta ranjivost kasnije eksploatisala u kranjem proizvodu. U nastavku sledi detaljan opis tri vrste ranjivosti koje se mogu naći u softverima koje koriste ovu tehnologiju: Event Handler Poisoning [[1]](#reference), Install-Time Attacks [[2]](#reference) i Prototype Pollution Vulnerability [[3]](#reference).
 
 ### Event Handler Poisoning
-Suština ovakvih napada jeste usporavanje rada niti koje opslužuju klijentske zahteve tako što se unose podaci koji teraju algoritme da obrađuju najgori mogući slučaj, umesto prosečni.
+Suština ovakvih napada jeste usporavanje rada niti koje opslužuju klijentske zahteve tako što se unose podaci koji teraju algoritme da obrađuju najgori mogući slučaj, umesto prosečni. NodeJs koristi arhitekturu vođenu događajima (Event driven architecture, EDA). EDA multipleksira mnoštvo klijentskih zahteva na mali broj Event Handler-a, da bi se umanjio gubitak performansi pri prelasku sa jedne na drugu nit (context switching overhead). Event handler-i se sastoje od jednonitnog Event Loop-a, kao i malog Worker pool-a koji služi za obradu skupih operacija. Nasuprot ove arhitekture, postoji i arhitektura u kojoj se svakom klijentu dodeljuje jedna nit (One Thread Per Client Architecture, OTPCA). Prednost ovakvog rešenja jeste izolovanost svakog klijenta, kao i smanjenje rizika pri usporenom radu jedne niti (ako nastane problem, nit se samo "uništava", i kreira se nova), dok je mana već pomenut gubitak performansi usled "skakanja" s jedne niti na drugu. 
 
-#### Stablo napada
-![Dijagram](/Dijagrami/EventHandlerPoisoningAttackTreeV2.jpg)
-
-#### Potrebne informacije
-NodeJs koristi arhitekturu vođenu događajima (Event driven architecture, EDA). EDA multipleksira mnoštvo klijentskih zahteva na mali broj Event Handler-a, da bi se umanjio gubitak performansi pri prelasku sa jedne na drugu nit (context switching overhead). Event handler-i se sastoje od jednonitnog Event Loop-a, kao i malog Worker pool-a koji služi za obradu skupih operacija. Nasuprot ove arhitekture, postoji i arhitektura u kojoj se svakom klijentu dodeljuje jedna nit (One Thread Per Client Architecture, OTPCA). Prednost ovakvog rešenja jeste izolovanost svakog klijenta, kao i smanjenje rizika pri usporenom radu jedne niti (ako nastane problem, nit se samo "uništava", i kreira se nova), dok je mana već pomenut gubitak performansi usled "skakanja" s jedne niti na drugu. 
-
-Svi najpoznatiji serverski EDA radni okviri koriste asimetričnu multi-procesnu arhitekturu vođenu događajima. Operativni sistem, ili radni okvir događaje smeštaju u redove, a odgovarajuće callback funkcije se izvršavaju sekvencijalno od strane Event Loop-a. U slučaju obrada skupih zahteva, poput čitanja i pisanja u datoteku, Event Loop može da taj zahtev prosledi Worker Pool-u, koji nakon završetka vraća povratnu informaciju Event Loop-u. Za svaki callback mora biti zagarantovana atomičnost, odnosno njeno izvršavanje se uvek dešava u celosti. Ako se event handler "zaglavi", vreme provedeno u tom stanju je protraćeno.
-
-NodeJs radni okvir se sastoji iz tri dela: Google-ov V8 JavaScript engine koji izvršava JavaScript kod, libuv biblioteke, pomoću koje je implementirana EDA, i JavaScript biblioteka koje koriste C++ za sistemske pozive.
+Svi najpoznatiji serverski EDA radni okviri koriste asimetričnu multi-procesnu arhitekturu vođenu događajima. Operativni sistem, ili radni okvir događaje smeštaju u redove, a odgovarajuće callback funkcije se izvršavaju sekvencijalno od strane Event Loop-a. U slučaju obrada skupih zahteva, poput čitanja i pisanja u datoteku, Event Loop može da taj zahtev prosledi Worker Pool-u, koji nakon završetka vraća povratnu informaciju Event Loop-u. Za svaki callback mora biti zagarantovana atomičnost, odnosno njeno izvršavanje se uvek dešava u celosti. Ako se event handler "zaglavi", vreme provedeno u tom stanju je protraćeno. Rezultat ovih napada je degradacija performansi sistema, a u najgorem slučaku i njegovo rušenje.
 
 #### Opis napada
 Činjenica da NodeJs koristi relativno mali broj niti (event handler-a) da opslužuje svoje klijente za posledicu ima to da ako zahtev od strane napadača natera nekog od handler-a da nedopustivo dugo vremena provede na njemu, može da uspori rad čitavog sistema, a čak može i da spreči opsluživanje ostalih klijenata. Ovakva vrsta napada naziva se Event Handler Poisoning (EHP), i relativno je česta kod NPM modula.
@@ -49,14 +40,13 @@ Umesto da statički ograničavamo kompleksnost API-a kroz refaktorisanje, isti r
 
 Oba načina zahtevaju refaktorisanje, međutim timeout način iziskuje manje troškove, jer dodatak nogog try-catch bloka je dosta lakše postići nego ponovo implementirati funkcionalnosti da bi bile adekvatno particionisane. Iako je princip timeout-ova jednostavan, implementacija u pravom radnom okviru poput NodeJs-a je izazovno. Svaki deo NodeJs radnog okvira bi morao da emituje TimeoutError bez kompromitovanja stanja sistema, počev od samog jezika, do biblioteka i logike u samim aplikacijama, i u sinhronim i u asinhronim aspektima. Callback funkcija koja se predugo izvršava truje Event Loop, pa je potrebno baciti TimeoutError u takvom callback-u. Task koji se dugo izvršava truje Worker-a. Takav Worker mora biti prekinut i ispunjen putem TimeoutError-a.
 
+#### Stablo napada
+![Dijagram](/Dijagrami/EventHandlerPoisoningAttackTreeV2.jpg)
+
 ### Install-Time Napadi
 Suština ovakvih napada jeste ugrađivanje malicioznog koda u skriptama za instalaciju paketa od kojih drugi poznati paketi zavise. Kod se krije duboko u lancu zavisnosti tih paketa, i na taj način se propagira. Korisnik kada skine paket koji je kompromitovan, ili koji zavisi od nekog drugog kompromitovanog paketa neznajući pokreće neželjene skripte, a da paket nije ni instalirao niti importovao.
 
-#### Stablo napada
-![Dijagram](/Dijagrami/InstallTimeNapadAttackTreeV2.jpg)
-
-#### Potrebne informacije
-Većina npm paketa poseduje ograničene potrebe vezane za konfuguraciju, odnosno nije im potrebno ništa osim skidanja JavaScript izvornog koda i smeštanja tog koda na putanju koja je poznata projektu koji će da ga koristi. U praksi, međutim, postoje paketi koji zahtevaju pomoćne bootsrapping akcije tokom instalacije, kao što je pisanje konfiguracionih datoteka ili kompajliranje koda koji će kasnije biti korišćen. Da bi se čitav ovaj proces automatizovao, npm paketi imaju dozvolu da registruju shell skripte koje se pokreću kao odgovor na određene događaje tokom procesa instalacije. Konkretno, mogu registrovati preinstall skripte koje se pokreću pre instalacije paketa, kao i install i postinstall skripte koje se pokreću za vreme, kao i nakon što se instalacija završila. Čitav proces predstavljen je na slici ispod.
+Većina npm paketa poseduje ograničene potrebe vezane za konfuguraciju, odnosno nije im potrebno ništa osim skidanja JavaScript izvornog koda i smeštanja tog koda na putanju koja je poznata projektu koji će da ga koristi. U praksi, međutim, postoje paketi koji zahtevaju pomoćne bootsrapping akcije tokom instalacije, kao što je pisanje konfiguracionih datoteka ili kompajliranje koda koji će kasnije biti korišćen. Da bi se čitav ovaj proces automatizovao, npm paketi imaju dozvolu da registruju shell skripte koje se pokreću kao odgovor na određene događaje tokom procesa instalacije. Konkretno, mogu registrovati preinstall skripte koje se pokreću pre instalacije paketa, kao i install i postinstall skripte koje se pokreću za vreme, kao i nakon što se instalacija završila. Čitav proces predstavljen je na slici ispod. Zbog ovog mehanizma moguće je sprovesti napad koji postiže narušavanje integriteta sistema, izvlačenje/uklanjanje kredencijala iz sistema, ometanje operacija host mašine, davanje pristupa žrtvinoj mašini napadačima. Ovo je moguće jer se skripte pokreću sa privilegijama korisnika koji ih je pokrenuo, koji često ima dozvolu da pristupi internetu.
 
 ![Slika1](/Dijagrami/NpmPackageInstallatinActionOrder.jpg)
 
@@ -82,8 +72,6 @@ Iako shell skripte nude znatnu fleksibilnost kod konfigurisanja paketa, takođe 
 }
 </pre>
 
-Ovakve skripte korišćene su da bi se izveli napadi na razne pretnje, uključujući narušavanje integriteta sistema, izvlačenje/uklanjanje kredencijala iz sistema, ometanje operacija host mašine, davanje pristupa žrtvinoj mašini napadačima. Ove pretnje su omogućene jer se skripte pokreću sa privilegijama korisnika koji ih je pokrenuo, koji često ima dozvolu da pristupi internetu.
-
 #### Mitigacije
 Novije verzije npm-a sadrže određene mitigacije za napade na ovakvu vrstu ranjivosti. Međutim, one često ne zadovoljavaju potrebe ni osoba koje rade na održavanju registra npm paketa, ni developera, jer ili kvare funkcionalnost paketa (na primer npm može biti iskonfigurisan da skroz ignoriše skripte prilikom instalacije, a koje mogu biti neophodne za rad paketa), ili stvaraju veliki teret na održavaoce registra (na primer nud npm audit opciju, koja prikazuje ručno označene bezbednosne probleme, a koja bi se morala ručno pokretati).
 
@@ -93,7 +81,7 @@ Pri implementaciji mitigacija ovakvih problema važno je razdvojiti detekciju od
 
 Sistem bi se izvršavao u 3 faze: u prvoj fazi se kreira manifest za paket koji se instalira, u drugoj se taj manifest poredi sa politikama koje je korisnik deklarisao, a u trećoj se install skripte paketa pokreću i izvršavaju pod zaštitom bezbednosnog modula na nivou kernela. Sledi prikaz toka izvršavanja sistema.
 
-![Slika1](/Dijagrami/InstallScriptSystemWorkflow.jpg)
+![Slika2](/Dijagrami/InstallScriptSystemWorkflow.jpg)
 
 ##### Faza 1
 U ovoj fazi se identifikuju svi paketi koji definišu install skripte i generiše manifest svih akcija koje se izvršavaju nad operativnim sistemom tokom poziva svake skripte. Ponašanje paketa koji se testira se nadgleda i snima u log datoteku, koja se nakon toga kompajlira u manifest. Nakon generisanja, manifest se skladišti u manifest bazu podataka i beleži se ime paketa i njegova verzija. Manifesti se generišu čak i kada se skripte sruše tokom izvršavanja. Važno je zabeležiti ponašanja problematičnih skripti, jer mogu izvršiti neželjene operacije pre nego što se sruše.
@@ -122,14 +110,13 @@ U trećoj fazi se skripte izvršavaju pod zaštitom bezbednosnog modula. Primer 
 ##### Podrazumevane politike
 Iako svaki korisnik treba da ima mogućnost da deklariše svoje politike koje najviše odgovaraju njegovim potrebama, važno je implementirati i podrazumevane politike, kako bi korisnici sa što manje napora mogli da koriste sistem, pod uslovom da mu podrazumevane politike odgovaraju. S tim u vezi, postojale bi dve različite podrazumevane politike, za developere, kao i za održavaoce registra. Pravila politike namenjene developerima bi dozvoljavala skriptama da štampaju izlaze na terminal, kao i da čitaju datoteke koje nisu osetljive, dok bi zabranile uspostavljanje veze sa mrežnim serverima. Pravila politike namenjene održavaocima registra bi se odredila na osnovu algoritma za učenje, koji je formulisan na osnovu istorijskih povlačenja paketa od strane održavalaca npm-a.
 
+#### Stablo napada
+![Dijagram](/Dijagrami/InstallTimeNapadAttackTreeV2.jpg)
+
 ### Prototype pollution
 Prototype pollution je vrsta ranjivosti koja se javlja u jezicima kao što je JavaScript, što znači da su NodeJs aplikacije podložne napadima koji je eksploatišu. Suština napada na ovakvu ranjivost leži u manipulaciji prototipa objekata radi izazivanja neočekivanog ponašanja u aplikaciji. Kada se modifikuje prototip objekta, te promene se reflektuju na sve njegove instance. Ako se nevalidni ili zlonamerni podaci unesu u aplikaciju putem manipulacije prototipa, može doći i do rušenja aplikacije.
 
-#### Stablo napada
-![Dijagram](/Dijagrami/PrototypePollutionAttackTree.jpg)
-
-#### Potrebne informacije
-U JavaScript-u, svaki objekat ima svoj prototip. Prototip je u suštini šema ili templejt od kog drugi objekti nasleđuju svojstva. Kada se kreira objekat u JavaScript-u, taj objekat je povezan sa njegovim prototipom. Ako se neko svojstvo ili metoda ne pronađu u samom objektu, JavaScript ih traži u njegovom prototipu i nastavlja kroz lanac prototipova dok ih ne pronađe, ili dok ne naiđe na kraj lanca (uglavnom null). Prototipovi se koriste kod nasleđivanja. Objekti se mogu kreirati na osnovu drugih objekata i naslediti svojstva i metode od njihovih prototipova.
+U JavaScript-u, svaki objekat ima svoj prototip. Prototip je u suštini šema ili templejt od kog drugi objekti nasleđuju svojstva. Kada se kreira objekat u JavaScript-u, taj objekat je povezan sa njegovim prototipom. Ako se neko svojstvo ili metoda ne pronađu u samom objektu, JavaScript ih traži u njegovom prototipu i nastavlja kroz lanac prototipova dok ih ne pronađe, ili dok ne naiđe na kraj lanca (uglavnom null). Prototipovi se koriste kod nasleđivanja. Objekti se mogu kreirati na osnovu drugih objekata i naslediti svojstva i metode od njihovih prototipova. Eksploatisanjem ove ranjivosti, napadač može izvršiti remote code execution, property injection, kao i denial of service.
 
 #### Opis napada
 U JavaScript izvršnom okruženju moguće je manipulisati važnim vrednostima objekata kako bi se promenio tok izvršavanja. Na serverskoj strani, kao u slučaju NodeJs-a, moguće je neželjeno izvršavanje proizvoljnog koda, što može izazvati ozbiljne sigurnosne probleme. Svi JavaScript tipovi podataka, izuzev "null" i "undefined" imaju različita prototip svojstva. Ako se prototip podaci određenog objekta, klase ili funkcije modifikuju, nove instance koje se kreiraju kroz konstruktor modifikovanog objekta, klase ili funkcije zadržaće modifikovana svojstva. Sledi primer koda koji poseduje prototype pollution ranjivost.
@@ -161,7 +148,7 @@ Ako ciljana klasa nasleđuje neku drugu klasu, potrebno je "dublje" referenciran
 5 console.log(polluted) // true
 </pre>
 
-Prototype pollution može dovesti do kritičnih ranjivosti, kao što je remote code execution, property injection, kao i denial of service napada. Remote code execution se može dogoditi kada izvorni kod evaluira i izvršava atribut nekog objekta. Na primer, napadač može izvršiti proizvoljan kod ako se atribut u argumentu funkcije <i>eval</i> "zagadi". Denial of service se može izvesti ako je napadač u stanju da zagadi generičke funkcije kao što je na primer "toString", koja je jedna od metoda klase Object. Slično, property injection se može izvršiti kada je napadač u mogućnosti da doda nova svojstva zagađivanjem prototipa objekta. Na primer, ako se bezbednosno svojstvo kao što je "Object.prototype.isAdmin" lažira i postavi na "true", napadač može da dobije privilegije admina.
+Kao što je već spomenuto u uvodnoj sekciji za napad, prototype pollution može dovesti do kritičnih ranjivosti, kao što je remote code execution, property injection, kao i denial of service napada. Remote code execution se može dogoditi kada izvorni kod evaluira i izvršava atribut nekog objekta. Na primer, napadač može izvršiti proizvoljan kod ako se atribut u argumentu funkcije <i>eval</i> "zagadi". Denial of service se može izvesti ako je napadač u stanju da zagadi generičke funkcije kao što je na primer "toString", koja je jedna od metoda klase Object. Slično, property injection se može izvršiti kada je napadač u mogućnosti da doda nova svojstva zagađivanjem prototipa objekta. Na primer, ako se bezbednosno svojstvo kao što je "Object.prototype.isAdmin" lažira i postavi na "true", napadač može da dobije privilegije admina.
 
 #### Mitigacije
 ##### Mitigacija pomoću Object.hasOwnProperty
@@ -265,13 +252,265 @@ Sledi prikaz koda koji je bio zaista korišćen da se spreči prototype pollutio
 
 Važno je napomenuti da ovaj način može proizvesti ozbiljne greške u slučaju da se koriste biblioteke kojima je neophodno da mogu da menjaju prototipove objekata. Dakle, ovaj način nije adekvatan u svim situacijama.
 
+#### Stablo napada
+![Dijagram](/Dijagrami/PrototypePollutionAttackTree.jpg)
+
+## MongoDB
+MongoDB je open-source NoSql baza podataka koja je napisana u C++-u i bazirana na dokumentima. Dokument je u BSON (Binary JSON) formatu, koji je dosta sličan JSON-u. MongoDB skladišti dokumente u kolekcijama. Koristi Map-reduce data processing paradigmu da pretvori velike količine podataka u korisne agregirane rezultate. Map-reduce je pandam group by operaciji u SQL-u. Za razliku od relacionih baza podataka, MongoDB ne poseduje statički tipiziranu šemu, te svaki dokument u kolekciji može posedovati različite atribute. Iako MongoDB ne podržava tradicionalne SQL upite, ima upite nad dokumentima pomoću kojih možemo pronaći podatke čije su vrednosti veće ili manje od neke određene vrednosti, ili koristiti regularne izraze za pretrage po obrascu. MongoDB se može skalirati unutar i između više distribuiranih data centara sa dobrim performansama, što ga čini poželjnijim u odnosu na relacione baze podataka.
+
+U nastavku sledi detaljan opis tri vrste ranjivosti koje se mogu naći u softverima koji koriste ovu tehnologiju: NoSql Injection Attacks [[6]](#reference), Buffer Overflow [[7]](#reference), i JavaScript File Inclusion [[8]](#reference).
+
+### NoSql Injection
+NoSql injection se odnosi na napad u kom napadač unosi proizvoljan tekst u nosql upit, čime je u stanju da promeni njegovo namenjeno ponašanje. NoSql Injection napadi su veoma slični Sql Injection napadima, glavna razlika je u tome što NoSql baze podataka ne podržavaju jedan standardizovani jezik za upite, te samim tim upiti koji su dozvoljeni zavise od samog engine-a koji baza koristi, programskog jezika, kao i razvojnog okruženja. U najvećem broju slučajeva NoSql baze podržavaju tekstualne formate, prevashodno JSON, i dozvoljavaju korisniku da unese podatke u tom formatu. Ako taj korisnički unos nije adekvatno obrađen i "očišćen", napadač može doći do raznih informacija o bazi, do podataka koje ona skladišti, da njima manipuliše, a čak i da kompromituje čitav sistem. 
+
+#### Opis napada
+U ovoj sekciji biće prikazana 4 tipa NoSql injection-a: PHP Tautologies injection, Union Queries, JavaScript injections, i Piggy-backed queries.
+
+##### PHP Tautologies Injection
+Kao i kod SQL injection napada, NoSql takođe dozvoljava da se zaobiđe autentifikacija tako što se ubaci kod u conditional statement-ima kako bi se proizveli izrazi koji su uvek istiniti. Sledi primer u kodu.
+
+<pre>
+db.logins.find({
+username: { $ne: 1
+}, password:{ $ne: 1 }
+})
+</pre>
+
+U ovom primeru, kod koji je ubačen je: <pre>{ $ne: 1 }</pre> 
+
+Upiti nalik ovom dobavljaju entitete čiji username i password nisu null. Napadači mogu da iskoriste operator "$ne" (notequal) da se prijave na sistem bez da znaju korisničko ime ili šifru.
+
+##### Union Queries
+Napadač koristi ranjiv parametar da izmeni podatke koji su trebali da budu vraćeni kao rezultat datog upita. OR uslov je iskorišćen da bi se vezao prazan izraz za korisnički unos. S obzirom da je prazan izraz uvek validan, provera šifre postaje beskorisna. Na primer, za sledeći unos:
+
+<pre>
+string query = username: ‘" + post_username
++ ‘", password: ‘" + post_password + ‘" }"
+</pre>
+
+Konstruisan upit je:
+
+<pre>
+{ username: ‘tolkien’, password: ‘hobbit’ }
+</pre>
+
+Za maliciozni unos:
+
+<pre>
+username=tolkien’,$or: [ {}, {
+‘a’:’a&password=’} ], $comment:’successful
+MongoDB injection’
+</pre>
+
+Konstruisan upit je:
+
+<pre>
+{ username: ‘tolkien’, $or: [ {}, { ‘a’
+: ‘a’ , password: ‘’ } ], $comment:
+‘successful MongoDB injection’ }
+</pre>
+
+U ovom primeru, prazan upit {} je uvek istinit.
+
+##### JavaScript Injection
+NoSql baze podataka dozvoljavaju izvršavanje JavaScript koda i obrađuju komplikovane upite i transakcije nad njihovim engine-om. Ako korisnički unos nije filtriran ili validiran, postoji rizik od ubacivanja malicioznog JavaScript koda.
+
+##### Piggy-backed Queries
+U ovom primeru napadač koristi escape sekvence i specijalne karaktere kao što su carriage return [CR], line feed [LF], zatvorene zagrade, tačka-zareze, da bi završili upit i potom ubacili maliciozne upite koji će se izvršiti. Na primer:
+
+Upit:
+
+<pre>
+db.doc.find({ username: ‘G. R. R.
+Martin’});
+db.dropDatabase();
+db.insert({username: ‘dummy ’,password:
+‘dummy ’})
+</pre>
+
+Originalni upit:
+
+<pre>
+db.doc.find({ username: ‘G. R. R. Martin’})
+</pre>
+
+Ubačeni kod:
+
+<pre>
+; db.dropDatabase();
+db.insert({username: ‘dummy ’, password:
+‘dummy’})
+</pre>
+
+U ovom primeru, nakon tačke-zareza, dodatan maliciozni upit je ubačen od strane napadača.
+
+#### Mitigacije
+U ovoj sekciji biće obrađena tri načina da se sistem zaštiti od NoSql injection napada, a to su: validacija unosa, adekvatna dodela dozvola korisnicima, kao i parametrizacija.
+
+##### Validacija unosa
+Svrha validacije unosa jeste da se ograniči korisnički unos i spreči izvršavanje neželjenih upita. Na primer, u MongoDB-u se polja za unos ograničavaju dodavanjem sledećeg koda:
+
+<pre>
+onkeypress = return"event.keyCode>=
+48&&event.keyCode<=57"
+</pre>
+
+Ovim se prihvataju samo brojevi. Oznake, razmak ili određeni specifični znakovi se takođe proveravaju i filtriraju kako bi se izbeglo zlonamerno ubacivanje koda.
+
+##### Adekvatna dodela dozvola
+Adekvatno implementirana autorizacija je jedna od najbitnijih koraka koji moraju biti ispunjeni da bi se napravio bezbedan sistem. Samo autorizovan korisnik sme da ima pristup bazi podataka. Svaki korisnik treba da poseduje adekvatne dozvole koje zavise od njegove uloge u sistemu. Na primer, u sistemu koji upravlja podacima o prisustvu studenata, student može proveriti informacije o svom prisustvu, ali ne sme da ih menja. S druge strane, profesor može ažurirati prisustvo studenta.
+
+##### Parametrizovani iskazi
+Korisnički unos ne sme biti direktno ubačen u condition statement, i mora biti validiran i isfiltriran. U parametrizaciji, parametrizovani statement-i se koriste za prosleđivanje ulaznih promenljivih. Umesto ugrađivanja korisničkih ulaza u condition statement, koriste se parametri. Ovaj mehanizam pomaže kod sprečavanja injection napada tako što razdvaja strukturu upita od samih podataka. Vezivanje korisničkog unosa je odvojeno od izvršavanja upita. Parametrizovani upiti automatski vrše "čišćenje" unosa. Pod tim se misli na adekvatno enkodovanje, escaping, kao i validaciju. Ovim se sprečava situacija u kojoj baza interpretira unos kao komandu. Čak i u slučaju da napadač pokuša da ubaci maliciozni kod u polje za unos, ubačen kod je tretiran kao tekst, a ne kao komanda koja se može izvršiti. Sledi kod koji proverava da li upit sadrži neki broj, i vraća grešku ako to nije slučaj.
+
+<pre>
+if(is numeric($usearchtwo)=="true"){} else
+echo "Incorrect.";
+</pre>
+
+#### Stablo napada
+![Dijagram](/Dijagrami/NoSqlInjectionAttackTree.jpg)
+
+### Buffer Overflow
+Baferi su regioni u memoriji koji privremeno skladište podatke dok se oni premeštaju s jedne lokacije na drugu. Buffer overflow se dešava kada količina podataka prevazilazi kapacitet bafera. Program u tom slučaju pokušavajući da upiše podatke na željenu lokaciju (bafer), počinje da upisuje preko podataka susednih memorijskih lokacija (blokova).
+
+Napadači koriste ove propuste u kodu kako bi menjali putanju izvršavanja aplikacije i pisali preko postojećih elemenata u memoriji, što može dovesti do gubitka postojećih datoteka, neželjenu izloženost podataka, izvršavanje malicioznog koda, i tako dalje. U prevodu, napadači koriste buffer overflow kako bi narušili izvršni stek aplikacije, izvršili proizvoljni kod, pa čak i preuzeli kontrolu nad mašinom žrtve. Ovakav tip napada je i dalje dosta čest, iz razloga što im se uglavnom pridodaje manje pažnje u odnosu na ostale napade, jer ih je teže otkriti i eksploatisati (napadač bi morao da poznaje raspored memorije programa, kao i detalje bafera).
+
+Postoji nekoliko vrsta buffer overflow napada, a tri najpoznatije su: stek-bazirani, heap-bazirani i format string napadi. MongoDB ranjivost koja će biti detaljno opisana u nastavku teksta poseduje dve slabosti: "nekorektna neutralizacija NUL bajtova, ili NUL karaktera", i "kopiranje bafera bez provere veličine unosa", koje spadaju u baffer overflow baziran na steku.
+
+#### Opis napada
+Buffer Overflow napadi zloupotrebljavaju komponentu poznatu pod nazivom MongoDB Handler. Handler preuzima operacije iz izvorne datotekte i kreira odgovarajuće dokumente (redove) u ciljnoj MongoDB bazi podataka. Napad koristi nešto što se zove null-byte injection da zaobiđe Handler i izazove buffer overflow. Null byte karakter je karakter koji se služi da se terminiraju stringovi. Primer takvih karaktera jeste <b>%00</b> kod URI-a, ili <b>0x00</b> kod heksadecimalnih zapisa. Ubacivanjem ovakvih karaktera bi se zaobišli filteri za proveru ispravnosti podataka, aplikacije bi se zbunile oko terminiranja stringova, a zatim bi bile izmanipulisane da izvršavaju različite akcije.
+
+Sledi jednostavan primer: napadač želi da okači malicioznu datoteku <i>malicious.php</i>, međutim, jedina ekstenzija koja je dozvoljena za upload-ovanje je .pdf. Napadač bi onda preimenovao datoteku u <i>malicious.php%00.pdf</i>. Aplikacija bi pročitala .pdf ekstenziju, validirala upload, i odbacila kraj stringa zbog ubačenog null bajta, čime bi napadač uspešno okačio maliciozni fajl.
+
+Većina današnjih aplikacija su implementirane pomoću programskih jezika višeg nivoa. Takve aplikacije zahtevaju obradu koda na sistemskom nivou, što se obično postiže korišćenjem C ili C++ programskog jezika.
+
+Null bajtovi u C/C++ jeziku predstavljaju terminaciju stringa ili delimiter (što znači da procesiranje stringa mora momentalno da se zaustavi). Svi bajtovi nakon delimitera se ignorišu. Ako string izgubi svoj null karakter, dužina stringa postaje nepoznata sve dok memorijski pokazivač ne naiđe na sledeći null bajt.
+
+Nekoliko jezika visokog nivoa tretira null bajtove kao placeholder-e za dužinu stringa, jer oni nemaju specijalno značenje u njihovom kontekstu. Razlika u interpretaciji omogućava null bajtovima da se sa lakoćom ubace u aplikacije kako bi manipulisali njihovim ponašanjem.
+
+U MongoDB-u, null byte injection bi mogao da dozvoli napadačima da pristupe i menjaju polja u bazi kojoj inače nebi imali pristup. Kod koji sledi dozvoljava korisnicima da dodaju proizvoljne objekte u kolekciju tako što bi prosledili niz objekata u GET komandu. Međutim, ne dozvoljava im da menjaju polje "verified".
+
+<pre>
+$con = new Mongo("mongodb://localhost);
+
+$db = $con->selectDB("example)->
+            selectCollection("students");
+
+$_GET("student") = array(
+    "name" => "Bilal",
+    "age" => 100,
+    <span style="color:red"><b>"verified" => true</b></span>
+);
+
+unset($_GET["student]["verified"]);
+$db->insert($GET["student"], true);
+</pre>
+
+Ako pogledamo bazu nakon izvršavanja prethodnog koda, možemo videti da je objekat kreiran unutar kolekcije "population", sa svim poljima izuzev polja "verified".
+
+![Slika3](/Dijagrami/bufferOverflow1.jpg)
+
+Ako ubacimo null bajt u ključ niza, možemo zaobići proveru i dozvoliti polju "verified" da bude skladišteno u MongoDB-u.
+
+<pre>
+$con = new Mongo("mongodb://localhost);
+
+$db = $con->selectDB("example)->
+            selectCollection("students");
+
+$_GET("student") = array(
+    "name" => "Bilal",
+    "age" => 100,
+    <span style="color:red"><b>"verified".chr(0)."ignored" => true</b></span>
+);
+
+unset($_GET["student]["verified"]);
+$db->insert($GET["student"], true);
+</pre>
+
+MongoDB će odbaciti sve nakon null bajta, a proverom kolekcije vidimo da je polje "verified" sada popunjeno.
+
+![Slika4](/Dijagrami/bufferOverflow2.jpg)
+
+Forsiranjem zaobilaska provera može se tehnički dozvoliti napadačima da ubace bilo kakav kod, koji bi onda bio skladišten u MongoDB-u, i kasnije izvršavan po želji. Većina napada koji su se u prošlosti desili su se sastojali od toga da su napadači koristili specijalno kreirane upite (gde su neki sadržali regularne izraze) da izazovu denial of service (DoS).
+
+#### Mitigacije
+Buffer Overflow ranjivost u MongoDB-u je odstranjena od strane MongoDB tima tako što su dodali dodatne provere na <b>arrayToObject</b>, koji konvertuje niz u jedan dokument. Novododate provere su suštinski veoma jednostavne: polja u kojima se čuvaju ključevi ne smeju dozvoliti da se u njima nalaze null bajtovi, i <b>arrayToObject</b> mora proizvesti grešku kada neki ključ sadrži null bajt.
+
+Sledi prikaz test skripte napisane u JavaScript-u koja proverava da li arrayToObject operator proizvodi grešku kada ključ sadrži null bajt. Skripta se može naći na github stranici mongo projekta[[9]](#reference).
+
+![Slika5](/Dijagrami/bufferOverflow3.jpg)
+
+Skripta definiše četiri testna slučaja, gde se svaki prosleđuje assertErrorCode() funkciji zajedno sa kodom greške. Svaki test se sastoji od agregacionong pipeline-a koji koristi $replaceWith operator, kome se prosleđuje $literal niz, koji sadrži parove ključ-vrednost. Prvi test prosleđuje niz koji sadrži ključ sa null bajtom (“a\0b”), dok drugi test prosleđuje objekat koji sadrži ključ sa null bajtom ({k: “a\0b”, v: “blah”}). Treći i četvrti testovi su slični, ali takođe poseduju $out fazu koja rezultat upisuje u kolekciju.
+
+Funkcija assertErrorCode() proverava da li data operacija nad kolekcijum proizvodi grešku sa odgovarajućim kodom. U ovom slučaju, kodovi su 4940400 i 4940401. 4940400 odgovara slučaju gde ključ sadrži null bajt, dok 4940401 odgovara slučaju u kom je ključ tipa string, ali sadrži null bajt.
+
+Sledi prikaz dela koda na serveru koji implementira logiku koja konvertuje BSON u JSON.
+
+![Slika6](/Dijagrami/bufferOverflow4.jpg)
+
+Prvo se porede prvi element u valArray nizu sa BSONType::String konstantom, gde se proverava da li je element tipa string. Nakon toga se dobavlja vrednost stringa prvog elementa, uz pomoć find() metode se proverava da li on sadrži null bajt (“\0”). Ako sadrži, baciće exception sa porukom “Key field cannot contain an embedded null byte”. Drugi deo koda baca isti exception ali sa drugim kodom greške, gde se ključ i vrednost ne dobavljaju iz niza, već se prosleđuju kao odvojeni parametri.
+
+#### Stablo napada
+![Dijagram](/Dijagrami/BufferOverflowAttackTree.jpg)
+
+### JavaScript File Inclusion
+JavaScript File Inclusion je još jedan tip injection napada. Korisnici imaju opciju da često korišćene delove koda izdvoje u datoteku i učitaju u MongoDB bazu podataka. Takve vrste datoteka se mogu jednostavno otvoriti, a njihov sadržaj izvršiti, kada god je to potrebno. Međutim, u nekim slučajevima neautorizovani korisnici su u stanju da zloupotrebe ovu funkcionalnost. Napadači mogu ubaciti datoteku koja sadrži maliciozni kod i potencijalno da načine ozbiljnu štetu bazi.
+
+#### Opis napada
+Uzmimo kao primer sistem za upravljanje bolnicom. Pretpostavimo da imamo datoteku pod nazivom hackedView. Potrebno je izvršiti dva koraka: da datoteka uspostavi vezu sa MongoDB bazom podataka, i da izvrši insert statement. Sledi isečak koji je zaslužan za učitavanje datoteke u MongoDB sistem.
+
+<pre>
+MongoDB Enterprise >load("hackedView.js")
+true
+MongoDB Enterprise >
+</pre>
+
+S obzirom da kod koji je napisan u datoteci nije validiran, biće izvršen bez ikakvih problema. Ovim vidimo da je JavaScript file inclusion potencijalno veoma opasan za baze podataka, jer može dovesti do unosa štetnih podataka u njih.
+
+Sledi prikaz sadržaja maliciozne datoteke.
+
+<pre>
+db = connect("localhost:27020/example");
+db.hasckedView.insert({"Success":"1"});
+print("File Inclusion Successful");
+</pre>
+
+Rezultat izvršavanja koda koji se nalazi u datoteci se može videti u isečku ispod.
+
+<pre>
+MongoDB Enterprise >load("hackedView.js")
+Connecting to: localhost:27020/example
+File Inclusion Successful
+true
+</pre>
+
+#### Mitigacije
+Postoje različite tehnike i mehanizmi za sprečavanje ovakvih napada. Neke od smernica koje pomažu pri povećanju bezbednosti sistema a koje su primenljive u većini situacija jesu adekvatno i dovoljno detaljno testiranje, povećavanje svesti developera o važnosti implementacije bezbednog sistema, vođenje računa o bezbednosnim aspektima sistema još od ranih faza dizajniranja aplikacije, poštovanje dobrih praksi kod kodiranja, adekvatna dodela privilegija i njihova izolacija, kao i regularno skeniranje sistema. Dobra praksa je i poštovanje principa najmanje privilegije, odnosno pobrinuti se da svaki korisnik poseduje samo one privilegije koju su mu zaista i neophodne kako bi obavio operacije koje su mu namenjene. Posebno je važno onemogućiti korisniku da može proizvoljno da izvršava JavaScript kod. Pored toga, od izuzetnog značaja je konstantan monitoring, i postojanje sistema za detekciju napada i propusta.
+
+Od konkretnih mitigacija, jedna od mogućnosti jeste celokupna zabrana izvršavanja JavaScript koda na serverskoj strani. To se može postići ako se <i>mongod</i> instanci prosledi <i>noscripting</i> opcija na komandnoj liniji, ili ako se opcija <i>security.javascriptEnabled</i> postavi na false u konfiguracionom fajlu. Detaljnije uputsvo se može pronaći u dokumentaciji za MongoDB [[10]](#reference). Ovo može biti dobro rešenje u slučaju da serveru zaista nije neophodno da izvršava JavaScript kod kako bi ispunio svoje funkcionalnosti. Pored toga, adekvatna validacija datoteka koje se prosleđuju je takođe pogodan način da se sistem zaštiti, kao i implementacija autentifikacije i autorizacije. Na kraju, korektna konfiguracija mreže isto može sprečiti neautorizovan pristup.
+
+#### Stablo napada
+![Dijagram](/Dijagrami/JavaScriptFileInclusionAttackTree.jpg)
+
 # Reference
 [1] https://www.usenix.org/system/files/conference/usenixsecurity18/sec18-davis.pdf
 
 [2] https://dl.acm.org/doi/pdf/10.1145/3488932.3523262
 
-[3] https://sci-hub.se/https://link.springer.com/article/10.1007/s10207-020-00537-0
+[3] https://link.springer.com/article/10.1007/s10207-020-00537-0
 
 [4] https://github.com/ossf/package-analysis
 
 [5] https://gitlab.com/apparmor/apparmor
+
+[6] https://www.researchgate.net/profile/Afsana-Brishty/publication/352666129_A_Survey_on_Detection_and_Prevention_of_SQL_and_NoSQL_Injection_Attack_on_Server-side_Applications/links/60dc3894458515d6fbeb1b90/A-Survey-on-Detection-and-Prevention-of-SQL-and-NoSQL-Injection-Attack-on-Server-side-Applications.pdf
+
+[7] https://www.trustwave.com/en-us/resources/blogs/spiderlabs-blog/dissecting-buffer-overflow-attacks-in-mongodb/
+
+[8] https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3172769
+
+[9] https://github.com/mongodb/mongo/commit/1772b9a0393b55e6a280a35e8f0a1f75c014f301?diff=split
+
+[10] https://www.mongodb.com/docs/v5.3/core/server-side-javascript/
