@@ -346,7 +346,7 @@ db.insert({username: ‘dummy ’, password:
 U ovom primeru, nakon tačke-zareza, dodatan maliciozni upit je ubačen od strane napadača.
 
 #### Mitigacije
-U ovoj sekciji biće obrađena tri načina da se otklone NoSql ranjivosti, a to su: validacija unosa, adekvatna dodela dozvola korisnicima, kao i parametrizacija.
+U ovoj sekciji biće obrađena tri načina da se otklone NoSql injection ranjivosti, a to su: validacija unosa, adekvatna dodela dozvola korisnicima, kao i parametrizacija.
 
 ##### Validacija unosa
 Svrha validacije unosa jeste da se ograniči korisnički unos i spreči izvršavanje neželjenih upita. Na primer, u MongoDB-u se polja za unos ograničavaju dodavanjem sledećeg koda:
