@@ -3,6 +3,7 @@
 U narednim poglavljima biće prikazan deo sistema koji će biti analiziran, data stabla napada, kao i biti priložen propratni tekst za ta stabla.
 
 U nastavku je naveden dijagram koji ističe deo sistema koji se analizira, koji uključuje serversku aplikaciju izgrađenu u NodeJS tehnologiji i MongoDB bazu podataka.
+
 ![Dijagram](/Dijagrami/NodeMongo.jpg)
 
 ## NodeJs
