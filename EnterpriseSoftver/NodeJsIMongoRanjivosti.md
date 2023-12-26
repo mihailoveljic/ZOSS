@@ -49,7 +49,7 @@ Suština ovakvih napada jeste ugrađivanje malicioznog koda u skriptama za insta
 
 Većina npm paketa poseduje ograničene potrebe vezane za konfuguraciju, odnosno nije im potrebno ništa osim skidanja JavaScript izvornog koda i smeštanja tog koda na putanju koja je poznata projektu koji će da ga koristi. U praksi, međutim, postoje paketi koji zahtevaju pomoćne bootsrapping akcije tokom instalacije, kao što je pisanje konfiguracionih datoteka ili kompajliranje koda koji će kasnije biti korišćen. Da bi se čitav ovaj proces automatizovao, npm paketi imaju dozvolu da registruju shell skripte koje se pokreću kao odgovor na određene događaje tokom procesa instalacije. Konkretno, mogu registrovati preinstall skripte koje se pokreću pre instalacije paketa, kao i install i postinstall skripte koje se pokreću za vreme, kao i nakon što se instalacija završila. Čitav proces predstavljen je na slici ispod. Zbog ovog mehanizma moguće je sprovesti napad koji postiže narušavanje integriteta sistema, izvlačenje/uklanjanje kredencijala iz sistema, ometanje operacija host mašine, davanje pristupa žrtvinoj mašini napadačima. Ovo je moguće jer se skripte pokreću sa privilegijama korisnika koji ih je pokrenuo, koji često ima dozvolu da pristupi internetu.
 
-![Slika1](/Dijagrami/NpmPackageInstallatinActionOrder.jpg)
+![Slika1](/Dijagrami/NodeJsMongo/NpmPackageInstallatinActionOrder.jpg)
 
 
 #### Opis napada
@@ -82,7 +82,7 @@ Pri implementaciji mitigacija važno je razdvojiti detekciju od sprovođenja, je
 
 Sistem bi se izvršavao u 3 faze: u prvoj fazi se kreira manifest za paket koji se instalira, u drugoj se taj manifest poredi sa politikama koje je korisnik deklarisao, a u trećoj se install skripte paketa pokreću i izvršavaju pod zaštitom bezbednosnog modula na nivou kernela. Sledi prikaz toka izvršavanja sistema.
 
-![Slika2](/Dijagrami/InstallScriptSystemWorkflow.jpg)
+![Slika2](/Dijagrami/NodeJsMongo/InstallScriptSystemWorkflow.jpg)
 
 ##### Faza 1
 U ovoj fazi se identifikuju svi paketi koji definišu install skripte i generiše manifest svih akcija koje se izvršavaju nad operativnim sistemom tokom poziva svake skripte. Ponašanje paketa koji se testira se nadgleda i snima u log datoteku, koja se nakon toga kompajlira u manifest. Nakon generisanja, manifest se skladišti u manifest bazu podataka i beleži se ime paketa i njegova verzija. Manifesti se generišu čak i kada se skripte sruše tokom izvršavanja. Važno je zabeležiti ponašanja problematičnih skripti, jer mogu izvršiti neželjene operacije pre nego što se sruše.
@@ -410,7 +410,7 @@ $db->insert($GET["student"], true);
 
 Ako pogledamo bazu nakon izvršavanja prethodnog koda, možemo videti da je objekat kreiran unutar kolekcije "population", sa svim poljima izuzev polja "verified".
 
-![Slika3](/Dijagrami/bufferOverflow1.jpg)
+![Slika3](/Dijagrami/NodeJsMongo/bufferOverflow1.jpg)
 
 Ako ubacimo null bajt u ključ niza, možemo zaobići proveru i dozvoliti polju "verified" da bude skladišteno u MongoDB-u.
 
@@ -432,7 +432,7 @@ $db->insert($GET["student"], true);
 
 MongoDB će odbaciti sve nakon null bajta, a proverom kolekcije vidimo da je polje "verified" sada popunjeno.
 
-![Slika4](/Dijagrami/bufferOverflow2.jpg)
+![Slika4](/Dijagrami/NodeJsMongo/bufferOverflow2.jpg)
 
 Forsiranjem zaobilaska provera može se tehnički dozvoliti napadačima da ubace bilo kakav kod, koji bi onda bio skladišten u MongoDB-u, i kasnije izvršavan po želji. Većina napada koji su se u prošlosti desili su se sastojali od toga da su napadači koristili specijalno kreirane upite (gde su neki sadržali regularne izraze) da izazovu denial of service (DoS).
 
@@ -441,7 +441,7 @@ Buffer Overflow ranjivost u MongoDB-u je odstranjena od strane MongoDB tima tako
 
 Sledi prikaz test skripte napisane u JavaScript-u koja proverava da li arrayToObject operator proizvodi grešku kada ključ sadrži null bajt. Skripta se može naći na github stranici mongo projekta[[9]](#reference).
 
-![Slika5](/Dijagrami/bufferOverflow3.jpg)
+![Slika5](/Dijagrami/NodeJsMongo/bufferOverflow3.jpg)
 
 Skripta definiše četiri testna slučaja, gde se svaki prosleđuje assertErrorCode() funkciji zajedno sa kodom greške. Svaki test se sastoji od agregacionong pipeline-a koji koristi $replaceWith operator, kome se prosleđuje $literal niz, koji sadrži parove ključ-vrednost. Prvi test prosleđuje niz koji sadrži ključ sa null bajtom (“a\0b”), dok drugi test prosleđuje objekat koji sadrži ključ sa null bajtom ({k: “a\0b”, v: “blah”}). Treći i četvrti testovi su slični, ali takođe poseduju $out fazu koja rezultat upisuje u kolekciju.
 
@@ -449,7 +449,7 @@ Funkcija assertErrorCode() proverava da li data operacija nad kolekcijum proizvo
 
 Sledi prikaz dela koda na serveru koji implementira logiku koja konvertuje BSON u JSON.
 
-![Slika6](/Dijagrami/bufferOverflow4.jpg)
+![Slika6](/Dijagrami/NodeJsMongo/bufferOverflow4.jpg)
 
 Prvo se porede prvi element u valArray nizu sa BSONType::String konstantom, gde se proverava da li je element tipa string. Nakon toga se dobavlja vrednost stringa prvog elementa i uz pomoć find() metode proverava da li on sadrži null bajt (“\0”). Ako sadrži, baciće exception sa porukom “Key field cannot contain an embedded null byte”. Drugi deo koda baca isti exception ali sa drugim kodom greške, gde se ključ i vrednost ne dobavljaju iz niza, već se prosleđuju kao odvojeni parametri.
 
