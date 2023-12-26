@@ -4,7 +4,7 @@ U narednim poglavljima biće prikazan deo sistema koji će biti analiziran, data
 
 U nastavku je naveden dijagram koji ističe deo sistema koji se analizira, koji uključuje serversku aplikaciju izgrađenu u NodeJS tehnologiji i MongoDB bazu podataka.
 
-![Dijagram](/Dijagrami/NodeMongo.jpg)
+![Dijagram](/Dijagrami/NodeJsMongo/NodeMongo.jpg)
 
 ## NodeJs
 NodeJs je jedna od najpopularnijih tehnologija koje se danas koriste za implementaciju backend sistema. Ono što ovu tehnologiju čini zanimljivom za analizu jeste njena modularnost, odnosno korišćenje Node Package Manager-a (NPM) za ubacivanje zavisnosti i paketa koji su drugi developeri implementirali. Dovoljno je da se u nekom od "čvorova" u lancu zavisnosti pronađe neka ranjivost, da bi se ta ranjivost kasnije eksploatisala u kranjem proizvodu. U nastavku sledi detaljan opis dve vrste ranjivosti i jedne vrste napada koji se mogu naći u softverima koji koriste ovu tehnologiju: Event Handler Poisoning vulnerability [[1]](#reference), Prototype Pollution Vulnerability [[2]](#reference), i Install-Time Attacks [[3]](#reference).
@@ -42,7 +42,7 @@ Umesto da statički ograničavamo kompleksnost API-a kroz refaktorisanje, isti r
 Oba načina zahtevaju refaktorisanje, međutim timeout način iziskuje manje troškove, jer dodatak nogog try-catch bloka je dosta lakše postići nego ponovo implementirati funkcionalnosti da bi bile adekvatno particionisane. Iako je princip timeout-ova jednostavan, implementacija u pravom radnom okviru poput NodeJs-a je izazovno. Svaki deo NodeJs radnog okvira bi morao da emituje TimeoutError bez kompromitovanja stanja sistema, počev od samog jezika, do biblioteka i logike u samim aplikacijama, i u sinhronim i u asinhronim aspektima. Callback funkcija koja se predugo izvršava truje Event Loop, pa je potrebno baciti TimeoutError u takvom callback-u. Task koji se dugo izvršava truje Worker-a. Takav Worker mora biti prekinut i ispunjen putem TimeoutError-a.
 
 #### Stablo napada
-![Dijagram](/Dijagrami/EventHandlerPoisoningAttackTreeV2.jpg)
+![Dijagram](/Dijagrami/NodeJsMongo/EventHandlerPoisoningAttackTreeV2.jpg)
 
 ### Install-Time Napadi
 Suština ovakvih napada jeste ugrađivanje malicioznog koda u skriptama za instalaciju paketa od kojih drugi poznati paketi zavise. Kod se krije duboko u lancu zavisnosti tih paketa, i na taj način se propagira. Korisnik kada skine paket koji je kompromitovan, ili koji zavisi od nekog drugog kompromitovanog paketa neznajući pokreće neželjene skripte, a da paket nije ni instalirao niti importovao.
@@ -112,7 +112,7 @@ U trećoj fazi se skripte izvršavaju pod zaštitom bezbednosnog modula. Primer 
 Iako svaki korisnik treba da ima mogućnost da deklariše svoje politike koje najviše odgovaraju njegovim potrebama, važno je implementirati i podrazumevane politike, kako bi korisnici sa što manje napora mogli da koriste sistem, pod uslovom da mu podrazumevane politike odgovaraju. S tim u vezi, postojale bi dve različite podrazumevane politike: za developere, kao i za održavaoce registra. Pravila politike namenjene developerima bi dozvoljavala skriptama da štampaju izlaze na terminal, kao i da čitaju datoteke koje nisu osetljive, dok bi zabranile uspostavljanje veze sa mrežnim serverima. Pravila politike namenjene održavaocima registra bi se odredila na osnovu algoritma za učenje, koji je formulisan na osnovu istorijskih povlačenja paketa od strane održavalaca npm-a.
 
 #### Stablo napada
-![Dijagram](/Dijagrami/InstallTimeNapadAttackTreeV2.jpg)
+![Dijagram](/Dijagrami/NodeJsMongo/InstallTimeNapadAttackTreeV2.jpg)
 
 ### Prototype pollution
 Prototype pollution je vrsta ranjivosti koja se javlja u jezicima kao što je JavaScript, što znači da su NodeJs aplikacije podložne napadima koji je eksploatišu. Suština napada na ovakvu ranjivost leži u manipulaciji prototipa objekata radi izazivanja neočekivanog ponašanja u aplikaciji. Kada se modifikuje prototip objekta, te promene se reflektuju na sve njegove instance. Ako se nevalidni ili zlonamerni podaci unesu u aplikaciju putem manipulacije prototipa, može doći i do rušenja aplikacije.
@@ -254,7 +254,7 @@ Sledi prikaz koda koji je bio zaista korišćen da se otkloni prototype pollutio
 Važno je napomenuti da ovaj način može proizvesti ozbiljne greške u slučaju da se koriste biblioteke kojima je neophodno da mogu da menjaju prototipove objekata. Dakle, ovaj način nije adekvatan u svim situacijama.
 
 #### Stablo napada
-![Dijagram](/Dijagrami/PrototypePollutionAttackTree.jpg)
+![Dijagram](/Dijagrami/NodeJsMongo/PrototypePollutionAttackTree.jpg)
 
 ## MongoDB
 MongoDB je open-source NoSql baza podataka koja je napisana u C++-u i bazirana na dokumentima. Dokument je u BSON (Binary JSON) formatu, koji je dosta sličan JSON-u. MongoDB skladišti dokumente u kolekcijama. Koristi Map-reduce data processing paradigmu da pretvori velike količine podataka u korisne agregirane rezultate. Map-reduce je pandam group by operaciji u SQL-u. Za razliku od relacionih baza podataka, MongoDB ne poseduje statički tipiziranu šemu, te svaki dokument u kolekciji može posedovati različite atribute. Iako MongoDB ne podržava tradicionalne SQL upite, ima upite nad dokumentima pomoću kojih možemo pronaći podatke čije su vrednosti veće ili manje od neke određene vrednosti, ili koristiti regularne izraze za pretrage po obrascu. MongoDB se može skalirati unutar i između više distribuiranih data centara sa dobrim performansama, što ga čini poželjnijim za korišćenje u odnosu na relacione baze podataka.
@@ -370,7 +370,7 @@ echo "Incorrect.";
 </pre>
 
 #### Stablo napada
-![Dijagram](/Dijagrami/NoSqlInjectionAttackTree.jpg)
+![Dijagram](/Dijagrami/NodeJsMongo/NoSqlInjectionAttackTree.jpg)
 
 ### Buffer Overflow
 Baferi su regioni u memoriji koji privremeno skladište podatke dok se oni premeštaju s jedne lokacije na drugu. Buffer overflow se dešava kada količina podataka prevazilazi kapacitet bafera. Program u tom slučaju pokušavajući da upiše podatke na željenu lokaciju (bafer), počinje da upisuje preko podataka susednih memorijskih lokacija (blokova).
@@ -454,7 +454,7 @@ Sledi prikaz dela koda na serveru koji implementira logiku koja konvertuje BSON 
 Prvo se porede prvi element u valArray nizu sa BSONType::String konstantom, gde se proverava da li je element tipa string. Nakon toga se dobavlja vrednost stringa prvog elementa i uz pomoć find() metode proverava da li on sadrži null bajt (“\0”). Ako sadrži, baciće exception sa porukom “Key field cannot contain an embedded null byte”. Drugi deo koda baca isti exception ali sa drugim kodom greške, gde se ključ i vrednost ne dobavljaju iz niza, već se prosleđuju kao odvojeni parametri.
 
 #### Stablo napada
-![Dijagram](/Dijagrami/BufferOverflowAttackTree.jpg)
+![Dijagram](/Dijagrami/NodeJsMongo/BufferOverflowAttackTree.jpg)
 
 ### JavaScript File Inclusion
 JavaScript File Inclusion je još jedan vid injection-a. Korisnici imaju opciju da često korišćene delove koda izdvoje u datoteku i učitaju u MongoDB bazu podataka. Takve vrste datoteka se mogu jednostavno otvoriti, a njihov sadržaj izvršiti, kada god je to potrebno. Međutim, u nekim slučajevima neautorizovani korisnici su u stanju da zloupotrebe ovu funkcionalnost. Napadači mogu ubaciti datoteku koja sadrži maliciozni kod i potencijalno da načine ozbiljnu štetu bazi.
@@ -493,7 +493,7 @@ Postoje različite tehnike i mehanizmi za sprečavanje napada koji koriste JavaS
 Od konkretnih mitigacija, jedna od mogućnosti jeste celokupna zabrana izvršavanja JavaScript koda na serverskoj strani. To se može postići ako se <i>mongod</i> instanci prosledi <i>noscripting</i> opcija na komandnoj liniji, ili ako se opcija <i>security.javascriptEnabled</i> postavi na false u konfiguracionom fajlu. Detaljnije uputsvo se može pronaći u dokumentaciji za MongoDB[[10]](#reference). Ovo može biti dobro rešenje u slučaju da serveru zaista nije neophodno da izvršava JavaScript kod kako bi ispunio svoje funkcionalnosti. Pored toga, adekvatna validacija datoteka koje se prosleđuju je takođe pogodan način da se sistem zaštiti, kao i implementacija autentifikacije i autorizacije. Na kraju, korektna konfiguracija mreže isto može sprečiti neautorizovan pristup.
 
 #### Stablo napada
-![Dijagram](/Dijagrami/JavaScriptFileInclusionAttackTree.jpg)
+![Dijagram](/Dijagrami/NodeJsMongo/JavaScriptFileInclusionAttackTree.jpg)
 
 # Reference
 [1] https://www.usenix.org/system/files/conference/usenixsecurity18/sec18-davis.pdf
