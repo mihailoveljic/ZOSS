@@ -4,7 +4,7 @@ U narednim poglavljima biće prikazan deo sistema koji će biti analiziran, data
 
 U nastavku je naveden dijagram koji ističe deo sistema koji se analizira, koji uključuje serversku aplikaciju izgrađenu u Java Spring Boot tehnologiji i Neo4j graf bazu podataka.
 
-![Dijagram](/Dijagrami/SpringBootNeo4j.jpg)
+![Dijagram](/Dijagrami/JavaNeo4j/SpringBootNeo4j.jpg)
 
 ## Java Spring Boot
 
@@ -12,7 +12,7 @@ Java Spring Boot je jedna od najpopularnijih tehnologija koje se danas koriste z
 
 #### Stablo napada
 
-![Dijagram](/Dijagrami/AttacksTree.jpg)
+![Dijagram](/Dijagrami/JavaNeo4j/AttacksTree.jpg)
 
 ### SSRF (Server-Side Request Forgery)
 
@@ -103,7 +103,7 @@ Drugi DoS napadi jednostavno iskorišćavaju ranjivosti koje uzrokuju pad ciljan
 
 Primer: Ova DTD ugrađuje entitete unutar entiteta, uzrokujući rekurentno dereferenciranje XML parsera kako bi se došlo do vrednosti korenskog entiteta "lol".
 
-![Slika](/Dijagrami/xmlExample.jpg)
+![Slika](/Dijagrami/JavaNeo4j/xmlExample.jpg)
 
 Svaki entitet "lol9" biće proširen u deset "lol8", i svaki od njih će postati deset "lol7", i tako dalje. Na kraju, jedan "lol9" će se proširiti u jednu milijardu "lol"-ova. Ovo može preopteretiti memoriju XML parsera, potencijalno izazivajući njegov pad.
 
@@ -267,7 +267,7 @@ Result result = transaction.execute( query, params );
 
 #### Stablo napada
 
-![Dijagram](/Dijagrami/CyberInjectionDiagram.jpg)
+![Dijagram](/Dijagrami/JavaNeo4j/CyberInjectionDiagram.jpg)
 
 ### Partial Path Traversal
 
@@ -340,11 +340,11 @@ Popravljena ranjivost pri prelasku putanje[[6]](#reference).
 
 Sledi kod koji predstavlja izmenu koja se odnosi na proveru staze datoteke u odnosu na određeni direktorijum, s ciljem obezbeđivanja bezbednosti i izbegavanja ranjivosti Directory Traversal.
 
-![Dijagram](/Dijagrami/PathTraversalCommit.jpg)
+![Dijagram](/Dijagrami/JavaNeo4j/PathTraversalCommit.jpg)
 
 #### Stablo napada
 
-![Dijagram](/Dijagrami/DirectoryTraversalAttackTree.jpg)
+![Dijagram](/Dijagrami/JavaNeo4j/DirectoryTraversalAttackTree.jpg)
 
 # Reference
 
