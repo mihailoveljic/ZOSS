@@ -42,7 +42,7 @@ Određeni Babel dodaci koji zavise od ovih metoda su posebno ranjivi, uključuju
 
 ### Attack - Exposure
 Izloženost ovoj ranjivosti prvenstveno se javlja tokom faze izrade aplikacije, gde se Babel koristi za kompajliranje JavaScript koda. 
-Napadač može da iskoristi ovu ranjivost uvođenjem zlonamerno kreiranog koda u proces pravljenja. 
+Napadač može da iskoristi ovu ranjivost uvođenjem zlonamerno kreiranog koda u build proces. 
 Ovaj kod, kada ga obrađuje ranjiva verzija @babel/traverse zajedno sa pogođenim dodacima, može dovesti do proizvoljnog izvršavanja koda. 
 Ovo izvršenje se dešava unutar okruženja za kompilaciju, što potencijalno dovodi do kompromitovanja celog sistema izgradnje. 
 Rizik je posebno visok u okruženjima u kojima se kompajlira nepouzdani kod, jer zlonamerni kod ne mora da bude deo vremena izvršavanja aplikacije da bi bio efikasan. Važno je napomenuti da iako je direktan uticaj na razvojno okruženje, posledice se mogu proširiti na integritet i bezbednost čitavog životnog ciklusa aplikacije.
@@ -82,7 +82,7 @@ Remote Memory Exposure je vrsta ranjivosti gde napadač može da dobije neovlaš
 
 Ova ranjivost se često javlja u umreženim aplikacijama kada nenamerno pošalju neinicijalizovani memorijski sadržaj udaljenom korisniku. 
 
-Ovo se može desiti zbog grešaka u programiranju, kao što je neuspeh inicijalizacije bafera ili slanje više podataka nego što je predviđeno. 
+Ovo se može desiti zbog grešaka u kodu, kao što je neuspeh inicijalizacije bafera ili slanje više podataka nego što je predviđeno. 
 
 Izložena memorija može da sadrži poverljive podatke kao što su lozinke, ključevi za šifrovanje ili lične korisničke informacije, što predstavlja značajan bezbednosni rizik.
 
@@ -91,7 +91,7 @@ Napadači koji iskorišćavaju ovu ranjivost mogu potencijalno čitati osetljive
 Za programere je ključno da osiguraju da njihov kod pravilno inicijalizuje i upravlja memorijom, kao i da implementiraju bezbednosne provere kako bi sprečili takve ranjivosti.
 
 #### Input Validation
-Kategorija „ranjivosti“ u kontekstu validacije unosa odnosi se na slabosti ili bezbednosne propuste koji mogu nastati kada sistem pravilno ne validira, sanira ili proverava podatke koje prima. 
+Kategorija „ranjivosti“ u kontekstu validacije unosa odnosi se na slabosti ili bezbednosne propuste koji mogu nastati kada sistem nepravilno validira, sanira ili proverava podatke koje prima. 
 Ova kategorija je ključna za sajber bezbednost jer nepropisno potvrđeni ulazi mogu dovesti do niza problema, kao što su SQL injection, cross-site scripting (XSS), prekoračenje bafera i druge vrste napada. 
 Ove ranjivosti se javljaju kada aplikacija prihvati unos bez adekvatne provere da li je bezbedan, potencijalno dozvoljavajući zlonamernim akterima da manipulišu sistemom, pristupe osetljivim podacima ili ometaju usluge. 
 Efikasna validacija unosa je neophodna za sprečavanje ovih ranjivosti i zaštitu sistema od različitih oblika eksploatacije.
@@ -117,13 +117,13 @@ Ovaj problem utiče na verzije Zahteva od 2.2.6 do 2.47.0 i od 2.51.0 do 2.67.0
 
 #### Manifestacija Ranjivosti
 Nenamerna Transmisija Podataka: 
-- Ranjivost se manifestuje tako što HTTP klijent nenamerno šalje delove server memorije kao odgovor na određene zahteve. Ovo može da se dogodi bez bilo kakvog evidentnog greške ili upozorenja, čineći izlaganje podataka tiho i stoga opasnije.
+- Ranjivost se manifestuje tako što HTTP klijent nenamerno šalje delove server memorije kao odgovor na određene zahteve. Ovo može da se dogodi bez bilo kakve evidentne greške ili upozorenja, čineći izlaganje podataka tiho i stoga opasnije.
 
 Iskorišćavanje od strane Napadača: 
 - Napadač koji je svestan ove ranjivosti može napraviti specifične HTTP zahteve da iskoristi ovu slabost. Mogli bi potencijalno automatizovati ovaj proces da izvuku velike količine podataka tokom vremena.
 
 Nepredvidljivi Izlaz:
-- Priroda i količina izloženih podataka može varirati u zavisnosti od stanja aplikacije i upotrebe memorije. Ova nepredvidljivost dodaje riziku jer je teško odrediti koji podaci mogu biti procurili u bilo kom trenutku.
+- Priroda i količina izloženih podataka može varirati u zavisnosti od stanja aplikacije i upotrebe memorije. Ova nepredvidljivost dodaje riziku jer je teško odrediti koji podaci mogu procuriti u bilo kom trenutku.
 
 ### Attack - Exposure
 
@@ -234,7 +234,7 @@ childObj.log()
 ### Mitigation
 Za programere koji koriste set-value paket je ključno da ažuriraju na verziju višu od 3.0.1 ili 2.0.1 kako bi ublažili ovu ranjivost.
 
-Fix:
+FPopravke u izvornom kodu:
 ![Set Value Fix part 1](SV-fix-1.png)
 ![Set Value Fix part 2](SV-fix-2.png)
 ![Set Value Fix part 3](SV-fix-3.png)
