@@ -30,7 +30,7 @@ U SSRF napadu protiv servera, napadač uzrokuje da aplikacija šalje HTTP zahtev
 
 Primer: Zamislimo aplikaciju za kupovinu koja omogućava korisnicima da pregledaju dostupnost određenog proizvoda u određenoj prodavnici. Da bi pružila informacije o stanju zaliha, aplikacija mora upitati različite REST API-je slanjem URL-a relevantnom backend API endpointu putem HTTP zahteva sa prednje strane. Kada korisnik pregleda status zaliha za proizvod, njihov preglednik šalje sledeći zahtev:
 
-<per>
+<pre>
 POST /product/stock HTTP/1.0
 Content-Type: application/x-www-form-urlencoded
 Content-Length: 118
@@ -103,7 +103,8 @@ Drugi DoS napadi jednostavno iskorišćavaju ranjivosti koje uzrokuju pad ciljan
 
 Primer: Ova DTD ugrađuje entitete unutar entiteta, uzrokujući rekurentno dereferenciranje XML parsera kako bi se došlo do vrednosti korenskog entiteta "lol".
 
-<pre><?xml version="1.0" encoding="UTF-8"?>
+<pre>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE example [
 <!ELEMENT example ANY >
 <!ENTITY lol "lol">
