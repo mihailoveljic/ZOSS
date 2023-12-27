@@ -1,4 +1,4 @@
-# Analiza ranjivosti, napada i mitigacija za .NET i PostgreSQL tehnologije
+# Analiza ranjivosti, napada i mitigacija za .NET, WCF i PostgreSQL tehnologije
 
 ## Uvod
 U ovom dokumentu biće opisani neki od mogućih napada na deo posmatranog sistema koji koristi .NET, Entity framework, WCF i PostgreSQL tehnologije.
@@ -9,7 +9,7 @@ U ovom dokumentu biće opisani neki od mogućih napada na deo posmatranog sistem
 .NET platforma je sveobuhvatni ekosistem razvoja softvera koji pruža snažne alate i okruženje za kreiranje raznovrsnih aplikacija  uključujući web, desktop i mobile, koristeći više jezika poput C#, VB.NET i F#. Kada je u pitanju bezbednost, .NET platforma pruža robustne mehanizme zaštite podataka i aplikacija, uključujući integrisane alatke za upravljanje identitetima i pristupom, kao i mehanizme enkripcije podataka. U nastavku će biti opisane ranjivosti pronađene tokom istraživanja ove tehnologije.
 
 ## JSON Deserialization Exploit
-Problem deserializacija podataka poznat je u mnogim programskim jezicima, pa tako i u .NET platformi. Nebezbedna deserializacijom je  ranjivost čijom eksploatacijom napadač može da umesto očekivanog serializovanog objekta, prosledi maliciozni kod koji će se izvršiti u aplikaciji. 
+Problem deserializacija podataka poznat je u mnogim programskim jezicima, pa tako i u .NET platformi. Nebezbedna deserializacija je ranjivost čijom eksploatacijom napadač može da umesto očekivanog serializovanog objekta, prosledi maliciozni kod koji će se izvršiti u aplikaciji. 
 
 ### Stablo napada
 
