@@ -245,6 +245,52 @@ Bitno je podesiti limite XML readera. Posebnu pažnju treba obratiti na  **MaxDe
 #### Pregledati known types listu
 Pregledati known types listu imajući u vidu da bilo koji od njih može biti instanciran u svakom trenutku.
 
+# PostgreSQL 
+PostgreSQL je moćan sistem za upravljanje relacionim bazama podataka otvorenog koda, poznat po svojoj proširivosti, robusnosti i poštovanju SQL standarda. Podržava različite vrste podataka, metode indeksiranja i napredne funkcionalnosti poput transakcija i kontrole konkurencije, što ga čini popularnim izborom za aplikacije različitih obima, od malih projekata do velikih preduzeća. Sa jakom zajednicom i stalnim razvojem, PostgreSQL je prepoznat po svojoj pouzdanosti i skalabilnosti u rukovanju složenim zadacima upravljanja podacima.
+
+## Trust Authentication Bypass
+
+Trust authentication je jedan od načina autentifikacije u PostgreSQL-u koji dozvoljava pristup bazi podataka bez potrebe za unosom korisničkih imena i lozinke. Ranjivost može nastati kada se podesi Trust autentifikacija, a server nije pravilno konfigurisan ili ne primenjuje odgovarajuće sigurnosne mere.
+
+### Stablo napada
+
+![TrustAuthenticationBypass](/Dijagrami/DotNet/TrustAuthenticationBypass.jpg)
+
+### Opis napada
+
+Napadač može iskoristiti Trust Authentication Bypass ako je PostgreSQL server podesen da koristi Trust autentifikaciju, a pristup serveru nije dovoljno ograničen. Na primer, ako je Trust autentifikacija dozvoljena sa bilo koje IP adrese, napadač može pristupiti serveru bez ikakve autentifikacije.
+
+Primer ranjive konfiguracije u PostgreSQL **pg_hba.conf** datoteci:
+```
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+host    all             all             0.0.0.0/0               trust
+```
+
+U ovom primeru, **trust** dozvoljava pristup svim bazama podataka i svim korisnicima sa bilo koje IP adrese bez ikakve autentifikacije.
+
+### Mitigacije
+
+#### Pravilna konfiguracija **pg_hba.conf**
+Potrebno je ograničiti Trust autentifikaciju na sigurne IP adrese i korisnike. Na primer, može se dozvoliti **Trust** samo sa lokalnih adresa:
+```
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+host    all             all             127.0.0.1/32            trust
+```
+
+#### Ne koristi Trust autentifikaciju
+Trust autentifikaciju koristiti samo u izuzetnim slučajevima, odnosno prilikom testiranja i razvoja na lokalnom računaru, kome pristup imaju samo korisnici od poverenja. 
+
+Umesto Trust autentifikacije, preporučuje se korišćenje MD5 ili SCRAM autentifikacije. Ove metoda zahtevaju unos korisničkog imena i lozinke, čime se povećava sigurnost.
+
+Primer konfiguracije md5 autentifikacije:
+```
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+host    all             all             127.0.0.1/32            md5
+```
+#### Pravilna konfiguracija firewall-a
+
+Još jedan način sprečavanja neovlašćenog pristupa PostgreSQL serveru je ograničavanje pristupa na mrežnom nivou.
+
 # Reference
 
 [1] https://shahedbd.medium.com/how-to-mitigating-sql-injection-in-entity-framework-applications-eb058f21758f
