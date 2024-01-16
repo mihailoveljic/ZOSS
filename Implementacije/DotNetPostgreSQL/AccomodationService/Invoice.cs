@@ -12,5 +12,10 @@
 		public string Name { get; set; }
 		public double Price { get; set; }
 		public int Quantity { get; set; }
+
+		public override string ToString()
+		{
+			return $"{Name} x {Quantity} = {Price * Quantity} RSD";
+		}
 	}
 }
