@@ -250,7 +250,7 @@ PostgreSQL je moćan sistem za upravljanje relacionim bazama podataka otvorenog 
 
 ## Trust Authentication Bypass
 
-Trust authentication je jedan od načina autentifikacije u PostgreSQL-u koji dozvoljava pristup bazi podataka bez potrebe za unosom korisničkih imena i lozinke. Ranjivost može nastati kada se podesi Trust autentifikacija, a server nije pravilno konfigurisan ili ne primenjuje odgovarajuće sigurnosne mere.
+Trust authentication je jedan od načina autentifikacije u PostgreSQL-u pomoću kojeg se svako ko ima pristup bazi može ulogovati sa bilo kojim korisničkim imenom, pa čak i kao superuser. Ranjivost može nastati kada se podesi Trust autentifikacija, a server nije pravilno konfigurisan ili ne primenjuje odgovarajuće sigurnosne mere [6].
 
 ### Stablo napada
 
@@ -258,7 +258,7 @@ Trust authentication je jedan od načina autentifikacije u PostgreSQL-u koji doz
 
 ### Opis napada
 
-Napadač može iskoristiti Trust Authentication Bypass ako je PostgreSQL server podesen da koristi Trust autentifikaciju, a pristup serveru nije dovoljno ograničen. Na primer, ako je Trust autentifikacija dozvoljena sa bilo koje IP adrese, napadač može pristupiti serveru bez ikakve autentifikacije.
+Napadač može iskoristiti Trust Authentication Bypass ako je PostgreSQL server podešen da koristi Trust autentifikaciju, a pristup serveru nije dovoljno ograničen. Na primer, ako je Trust autentifikacija dozvoljena sa bilo koje IP adrese, dovoljno je da napadač zna korisničko ime korisnika na čiji nalog želi da se prijavi, bez potrebe za šifrom. Na ovaj način može se prijaviti i kao superuser ukoliko mu je poznato njegovo korisničko ime. Nakon prijave, napadač može radi sve što i korisnik na čiji nalog se prijavio, te može doći krađe, izmene ili brisanja podataka.  
 
 Primer ranjive konfiguracije u PostgreSQL **pg_hba.conf** datoteci:
 ```
@@ -277,8 +277,8 @@ Potrebno je ograničiti Trust autentifikaciju na sigurne IP adrese i korisnike. 
 host    all             all             127.0.0.1/32            trust
 ```
 
-#### Ne koristi Trust autentifikaciju
-Trust autentifikaciju koristiti samo u izuzetnim slučajevima, odnosno prilikom testiranja i razvoja na lokalnom računaru, kome pristup imaju samo korisnici od poverenja. 
+#### Ne koristiti Trust autentifikaciju
+Trust autentifikaciju koristiti samo u izuzetnim slučajevima, odnosno prilikom testiranja i razvoja na lokalnom računaru, kome pristup imaju samo korisnici od poverenja.
 
 Umesto Trust autentifikacije, preporučuje se korišćenje MD5 ili SCRAM autentifikacije. Ove metoda zahtevaju unos korisničkog imena i lozinke, čime se povećava sigurnost.
 
@@ -302,3 +302,5 @@ Još jedan način sprečavanja neovlašćenog pristupa PostgreSQL serveru je ogr
 [4] https://systemweakness.com/exploiting-json-serialization-in-net-core-694c111faa15
 
 [5] https://learn.microsoft.com/en-us/dotnet/framework/wcf/feature-details/security-considerations-for-data#avoiding-unintentional-information-disclosure
+
+[6] https://www.postgresql.org/docs/9.3/auth-methods.html
