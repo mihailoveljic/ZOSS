@@ -74,6 +74,7 @@ const loginUser = asyncHandler(async (req, res) => {
 //@route POST /api/users/current
 //@access private
 const getLoggedInUserInfo = asyncHandler(async (req, res) => {
+  console.log("User wants to fetch their information")
   res.json(req.user);
 });
 

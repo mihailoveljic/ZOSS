@@ -2,9 +2,14 @@ const express = require("express")
 const connectDb = require("./config/dbConnection")
 const errorHandler = require("./middleware/errorHandler")
 const dotenv = require("dotenv").config()
+const cors = require("cors");
+const corsOptions = require("./config/corsOptions");
 
 connectDb();
 const app = express()
+
+// Cross Origin Resource Sharing
+app.use(cors(corsOptions));
 
 const port = process.env.PORT || 5000
 
